@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+psycopg2 = "*"
+django = "*"
+graphene-django = "*"
+django-cors-headers = "*"
+
+[dev-packages]
+pynvim = "*"
+pylint = "*"
+isort = "*"
+yapf = "*"
+
+[requires]
+python_version = "3.9"

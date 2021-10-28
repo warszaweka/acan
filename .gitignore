@@ -1,0 +1,5 @@
+/backend/static/
+/backend/backend/settings/environment.py
+/frontend/node_modules/
+/frontend/dist/
+/frontend/src/environment.js
