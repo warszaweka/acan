@@ -3,5 +3,6 @@ from django.middleware.csrf import get_token
 
 
 def csrf(request):
-    token = get_token(request)
-    return JsonResponse({'token': token})
+    return JsonResponse({
+        'token': get_token(request),
+    })

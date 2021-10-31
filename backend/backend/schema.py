@@ -1,9 +1,5 @@
-from acan.schema import Query as AcanQuery
-from graphene import ObjectType, Schema
+from graphene import Schema
 
-
-class Query(AcanQuery, ObjectType):
-    pass
-
+from acan.schema import Query
 
 schema = Schema(query=Query)

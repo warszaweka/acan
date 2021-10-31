@@ -15,16 +15,13 @@ INSTALLED_APPS = [
     'graphene_django',
     'corsheaders',
 ]
-LANGUAGE_CODE = 'uk'
+MEDIA_ROOT = BASE_DIR / 'media'
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
@@ -40,20 +37,10 @@ TEMPLATES = [
         },
     },
 ]
-TIME_ZONE = 'Europe/Kiev'
-USE_I18N = True
-USE_L10N = True
-USE_TZ = True
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME':
-        'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME':
-        'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True
 STATIC_ROOT = BASE_DIR / 'static'
-GRAPHENE = {"SCHEMA": "backend.schema.schema"}
+GRAPHENE = {
+    "SCHEMA": "backend.schema.schema",
+}
 CORS_ALLOW_CREDENTIALS = True
