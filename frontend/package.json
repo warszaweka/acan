@@ -1,8 +1,8 @@
 {
   "name": "frontend",
   "version": "1.0.0",
-  "private": true,
   "dependencies": {
+    "apollo-link-retry": "^2.2.16",
     "axios": "^0.24.0",
     "core-js": "^3.6.5",
     "vue": "^2.6.11",
@@ -15,8 +15,6 @@
     "@vue/cli-plugin-router": "~4.5.0",
     "@vue/cli-service": "~4.5.0",
     "graphql-tag": "^2.9.0",
-    "stylus": "^0.54.7",
-    "stylus-loader": "^3.0.2",
     "vue-cli-plugin-apollo": "~0.22.2",
     "vue-template-compiler": "^2.6.11"
   },

@@ -1,17 +1,12 @@
 import axios from 'axios'
-import store from './store'
 import environment from './environment'
 
-let token
+let token = ""
 
-export default function() {
-  return token
+async function refresh_token() {
+  token = (await axios.get(environment.csrf, {
+    withCredentials: true,
+  })).data.token
 }
 
-axios.get(environment.csrf, {
-  withCredentials: true,
-})
-  .then(function (response) {
-    token = response.data.token
-    store.commit('csrfon')
-  })
+export {token, refresh_token}

@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1>
-      Home
+      {{$store.state.user.username}}
     </h1>
   </div>
 </template>
