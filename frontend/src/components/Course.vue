@@ -1,19 +1,24 @@
 <template>
   <div>
-    <h1>
-      Course
-    </h1>
     <div v-if="course">
-      <h2>
-        {{course.title}} {{course.purchased ? "purchased" : ""}}
-      </h2>
-      <p>
-        {{course.description}}
-      </p>
+      <div>
+        {{ course.title }}
+      </div>
+      <div v-if="course.purchased">
+        purchased
+      </div>
+      <div>
+        {{ course.description }}
+      </div>
       <ul>
         <li v-for="lesson in course.lessonSet" :key="lesson.order">
-          <router-link :to="`/lesson/${lesson.id}`">
-            {{lesson.order}} {{lesson.title}}
+          <router-link :to="{ name: 'lesson', params: { id: lesson.id } }">
+            <span>
+              {{ lesson.order }}
+            </span>
+            <span>
+              {{ lesson.title }}
+            </span>
           </router-link>
         </li>
       </ul>
@@ -22,13 +27,13 @@
 </template>
 
 <script>
-import gql from 'graphql-tag'
+import gql from 'graphql-tag';
 
 export default {
   data() {
     return {
       course: null,
-    }
+    };
   },
   apollo: {
     course: {
@@ -49,9 +54,9 @@ export default {
       variables() {
         return {
           id: this.$route.params.id,
-        }
-      }
+        };
+      },
     },
   },
-}
+};
 </script>

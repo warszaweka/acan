@@ -1,38 +1,43 @@
-import Vue from 'vue'
-import VueApollo from 'vue-apollo'
-import {createApolloClient} from 'vue-cli-plugin-apollo/graphql-client'
-import {from} from 'apollo-link'
-import {RetryLink} from "apollo-link-retry"
-import {onError} from 'apollo-link-error'
-import {setContext} from '@apollo/client/link/context';
-import {from as rfrom} from 'rxjs';
-import {token, refresh_token} from './csrf'
-import environment from './environment'
+import Vue from 'vue';
+import VueApollo from 'vue-apollo';
+import { ApolloClient } from 'apollo-client';
+import { InMemoryCache } from 'apollo-cache-inmemory';
+import { from } from 'apollo-link';
+import { RetryLink } from 'apollo-link-retry';
+import { onError } from 'apollo-link-error';
+import { createHttpLink } from 'apollo-link-http';
+import { setContext } from '@apollo/client/link/context';
+import { from as rfrom } from 'rxjs';
+import { getToken, refreshToken } from './csrf';
+import environment from './environment';
 
-Vue.use(VueApollo)
+Vue.use(VueApollo);
 
-let apolloClient = createApolloClient({
-  httpLinkOptions: {
-    credentials: 'include',
-  },
-  httpEndpoint: environment.graphql,
+const apolloClient = new ApolloClient({
+  cache: new InMemoryCache(),
   link: from([
     new RetryLink(),
-    new onError(function(obj) {
-      return rfrom((async function() {
-        await refresh_token()
-        throw obj.networkError
-      })())
+    onError(((obj) => rfrom((async function asyncRefreshToken() {
+      await refreshToken();
+      throw obj.networkError;
+    })()))),
+    setContext((request, previousContext) => {
+      const context = previousContext;
+      if (!Object.prototype.hasOwnProperty.call(context, 'headers')) {
+        context.headers = {};
+      }
+      context.headers['X-CSRFTOKEN'] = getToken();
+      return context;
     }),
-    setContext(function(request, previousContext) {
-      previousContext.headers['X-CSRFTOKEN'] = token
-      return previousContext
-    })
-  ])
-}).apolloClient
+    createHttpLink({
+      uri: environment.graphql,
+      credentials: 'include',
+    }),
+  ]),
+});
 
-let apolloProvider = new VueApollo({
+const apolloProvider = new VueApollo({
   defaultClient: apolloClient,
-})
+});
 
-export {apolloClient, apolloProvider}
+export { apolloClient, apolloProvider };

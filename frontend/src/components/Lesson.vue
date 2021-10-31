@@ -1,40 +1,45 @@
 <template>
   <div>
-    <h1>
-      Lesson
-    </h1>
     <div v-if="lesson">
-      <h2>
-        {{lesson.order}} {{lesson.title}}
-      </h2>
-      <p>
-        {{lesson.description}}
-      </p>
+      <div>
+        <span>
+          {{ lesson.order }}
+        </span>
+        <span>
+          {{ lesson.title }}
+        </span>
+      </div>
+      <div>
+        {{ lesson.description }}
+      </div>
       <div v-if="lesson.course.purchased">
-        <video-player :relative-path="lesson.video"/>
         <div>
-          {{lesson.file}}
+          {{ lesson.video }}
+        </div>
+        <div v-if="lesson.addon">
+          {{ lesson.addon }}
         </div>
       </div>
-      <router-link :to="`/course/${lesson.course.id}`">
-        {{lesson.course.title}} {{lesson.course.purchased ? "purchased" : ""}}
+      <router-link :to="{ name: 'course', params: { id: lesson.course.id } }">
+        <span>
+          {{ lesson.course.title }}
+        </span>
+        <span v-if="lesson.course.purchased">
+          purchased
+        </span>
       </router-link>
     </div>
   </div>
 </template>
 
 <script>
-import gql from 'graphql-tag'
-import VideoPlayer from './VideoPlayer.vue'
+import gql from 'graphql-tag';
 
 export default {
   data() {
     return {
       lesson: null,
-    }
-  },
-  components: {
-    VideoPlayer,
+    };
   },
   apollo: {
     lesson: {
@@ -50,16 +55,16 @@ export default {
             title
             description
             video
-            file
+            addon
           }
         }
       `,
       variables() {
         return {
           id: this.$route.params.id,
-        }
+        };
       },
     },
   },
-}
+};
 </script>

@@ -41,10 +41,6 @@ class Query(ObjectType):
     course = Field(CourseType, id=String(required=True))
     lesson = Field(LessonType, id=String(required=True))
     user = Field(UserType)
-    login = Field(UserType,
-                  username=String(required=True),
-                  password=String(required=True))
-    logout = Field(Boolean)
 
     def resolve_courses(root, info):
         return Course.objects.all()
@@ -67,6 +63,13 @@ class Query(ObjectType):
             return user
         return None
 
+
+class Mutation(ObjectType):
+    login = Field(UserType,
+                  username=String(required=True),
+                  password=String(required=True))
+    logout = Field(UserType)
+
     def resolve_login(root, info, username, password):
         context = info.context
         user = authenticate(context, username=username, password=password)
@@ -77,4 +80,4 @@ class Query(ObjectType):
 
     def resolve_logout(root, info):
         logout(info.context)
-        return True
+        return None

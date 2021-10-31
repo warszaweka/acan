@@ -1,12 +1,14 @@
 <template>
   <div>
-    <h1>
-      Courses
-    </h1>
     <ul>
       <li v-for="course in courses" :key="course.id">
-        <router-link :to="`/course/${course.id}`">
-          {{course.title}} {{course.purchased ? "purchased" : ""}}
+        <router-link :to="{ name: 'course', params: { id: course.id } }">
+          <span>
+            {{ course.title }}
+          </span>
+          <span v-if="course.purchased">
+            purchased
+          </span>
         </router-link>
       </li>
     </ul>
@@ -14,13 +16,13 @@
 </template>
 
 <script>
-import gql from 'graphql-tag'
+import gql from 'graphql-tag';
 
 export default {
   data() {
     return {
       courses: [],
-    }
+    };
   },
   apollo: {
     courses: gql`
@@ -33,5 +35,5 @@ export default {
       }
     `,
   },
-}
+};
 </script>
