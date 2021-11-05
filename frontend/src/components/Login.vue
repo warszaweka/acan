@@ -1,22 +1,19 @@
 <template>
-  <div>
-    <label for="username">
-      Username
-    </label>
-    <input v-model="username" id="username"/>
-    <label for="password">
-      Password
-    </label>
-    <input type="password" v-model="password" id="password"/>
-    <button v-on:click="login">
+  <b-form @submit.prevent="login">
+    <b-form-group label="Username" label-for="username">
+      <b-form-input id="username" v-model="username" type="text" required/>
+    </b-form-group>
+    <b-form-group label="Password" label-for="password">
+      <b-form-input id="password" v-model="password" type="password" required/>
+    </b-form-group>
+    <b-button type="submit">
       Login
-    </button>
-  </div>
+    </b-button>
+    </b-form>
 </template>
 
 <script>
 import gql from 'graphql-tag';
-import { getPrev, setPrev } from '../login';
 
 export default {
   data() {
@@ -54,15 +51,9 @@ export default {
           });
         },
       })).data.login) {
-        const prev = getPrev();
-        if (prev) {
-          setPrev(null);
-          this.$router.push(prev);
-        } else {
-          this.$router.push({
-            name: 'home',
-          });
-        }
+        this.$router.push({
+          name: 'home',
+        });
       }
     },
   },

@@ -4,9 +4,11 @@
       <div>
         {{ user.username }}
       </div>
-      <button v-on:click="logout">
-        Logout
-      </button>
+      <b-form @submit.prevent="logout">
+        <b-button type="submit">
+          Logout
+        </b-button>
+        </b-form>
     </div>
   </div>
 </template>

@@ -6,6 +6,7 @@ CSRF_COOKIE_SECURE = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 INSTALLED_APPS = [
     'acan.apps.AcanConfig',
+    'modeltranslation',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -15,13 +16,20 @@ INSTALLED_APPS = [
     'graphene_django',
     'corsheaders',
 ]
+LANGUAGE_CODE = 'uk'
+LANGUAGES = [
+    ('uk', 'Ukrainian'),
+    ('ru', 'Russian'),
+]
 MEDIA_ROOT = BASE_DIR / 'media'
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'acan.middleware.LanguageMiddleware',
 ]
 ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
@@ -37,6 +45,8 @@ TEMPLATES = [
         },
     },
 ]
+USE_I18N = True
+AUTH_USER_MODEL = 'acan.User'
 SESSION_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SECURE = True
 STATIC_ROOT = BASE_DIR / 'static'

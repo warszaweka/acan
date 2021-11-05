@@ -1,20 +1,19 @@
-from django.contrib.auth import get_user_model
-from django.db.models import (CASCADE, CharField, FileField, ForeignKey,
-                              ManyToManyField, Model, OneToOneField,
-                              PositiveSmallIntegerField, TextField)
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-
-user_model = get_user_model()
+from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
+from django.db.models import (CASCADE, PROTECT, BooleanField, CharField,
+                              DecimalField, EmailField, FileField, ForeignKey,
+                              Model, PositiveSmallIntegerField, TextField)
 
 
 class Course(Model):
     title = CharField(max_length=128)
+    short_description = TextField()
     description = TextField()
+    cost = DecimalField(max_digits=8, decimal_places=2)
 
     def purchased(self, user):
-        if user.is_authenticated and Course.objects.filter(
-                profile__user__id=user.id, id=self.id).exists():
+        if user.is_authenticated and __class__.objects.filter(
+                order__user__id=user.id, order__payed=True,
+                id=self.id).exists():
             return True
         return False
 
@@ -28,12 +27,42 @@ class Lesson(Model):
     addon = FileField(null=True, blank=True)
 
 
-class Profile(Model):
-    user = OneToOneField(user_model, on_delete=CASCADE)
-    courses = ManyToManyField(Course)
+class UserManager(BaseUserManager):
+    def create_user(self, email, password):
+        user = self.model(email=self.normalize_email(email))
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password):
+        user = self.create_user(email, password)
+        user.is_active = True
+        user.is_staff = True
+        user.save(using=self._db)
+        return user
 
 
-@receiver(post_save, sender=user_model)
-def create_profile(sender, instance, created, **kwargs):
-    if created:
-        Profile.objects.create(user=instance)
+class User(AbstractBaseUser):
+    email = EmailField(unique=True)
+    is_active = BooleanField(default=False)
+    is_staff = BooleanField(default=False)
+
+    objects = UserManager()
+
+    USERNAME_FIELD = 'email'
+
+    def has_perm(self, *args, **kwargs):
+        return True
+
+    def has_module_perms(self, *args, **kwargs):
+        return True
+
+    def courses(self):
+        return Course.objects.filter(order__user__id=self.id,
+                                     order__payed=True).all()
+
+
+class Order(Model):
+    course = ForeignKey(Course, on_delete=PROTECT)
+    user = ForeignKey(User, on_delete=CASCADE)
+    payed = BooleanField(default=False)

@@ -8,6 +8,8 @@ psycopg2 = "*"
 django = "*"
 graphene-django = "*"
 django-cors-headers = "*"
+django-modeltranslation = "*"
+sendgrid = "*"
 
 [dev-packages]
 pynvim = "*"
