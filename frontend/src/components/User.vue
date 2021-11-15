@@ -1,16 +1,33 @@
 <template>
-  <div>
-    <div v-if="user">
-      <div>
-        {{ user.username }}
-      </div>
-      <b-form @submit.prevent="logout">
-        <b-button type="submit">
-          Logout
-        </b-button>
-        </b-form>
-    </div>
-  </div>
+  <b-container
+    class="py-3"
+    >
+    <b-row>
+      <b-col>
+        <div v-if="user">
+          <div
+            class="mb-3"
+            >
+            {{ user.email }}
+          </div>
+          <div>
+            <b-button
+              v-on:click.prevent="logout"
+              class="mx-3"
+              >
+              {{ logout_button_text }}
+            </b-button>
+            <b-button
+              :to="{ name: 'set_password' }"
+              class="mx-3"
+              >
+              {{ set_password_button_text }}
+            </b-button>
+          </div>
+        </div>
+      </b-col>
+    </b-row>
+  </b-container>
 </template>
 
 <script>
@@ -20,7 +37,16 @@ export default {
   data() {
     return {
       user: null,
+      language: 'uk',
     };
+  },
+  computed: {
+    logout_button_text() {
+      return this.language === 'ru' ? 'Выйти' : 'Вийти';
+    },
+    set_password_button_text() {
+      return this.language === 'ru' ? 'Изменить пароль' : 'Змінити пароль';
+    },
   },
   methods: {
     async logout() {
@@ -28,21 +54,42 @@ export default {
         mutation: gql`
           mutation {
             logout {
-              username
+              user {
+                email
+              }
+              courses {
+                id
+                lessonSet {
+                  description
+                  video
+                  addon
+                }
+                purchased
+              }
             }
           }
         `,
-        update: (store, result) => {
+        update(store, result) {
           store.writeQuery({
             query: gql`
               query {
                 user {
-                  username
+                  email
+                }
+                courses {
+                  id
+                  lessonSet {
+                    description
+                    video
+                    addon
+                  }
+                  purchased
                 }
               }
             `,
             data: {
-              user: result.data.logout,
+              user: result.data.logout.user,
+              courses: result.data.logout.courses,
             },
           });
         },
@@ -56,8 +103,13 @@ export default {
     user: gql`
       query {
         user {
-          username
+          email
         }
+      }
+    `,
+    language: gql`
+      query {
+        language
       }
     `,
   },

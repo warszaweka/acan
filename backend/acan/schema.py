@@ -1,11 +1,13 @@
+from decimal import *
+
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
+from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.translation import activate, get_language
-from django.utils.translation import gettext as _
 from graphene import Boolean, Field, List, NonNull, ObjectType, String
 from graphene_django import DjangoObjectType
 from sendgrid import SendGridAPIClient
@@ -18,13 +20,28 @@ from .tokens import email_verify_token, password_reset_token
 class CourseType(DjangoObjectType):
     class Meta:
         model = Course
-        fields = ('id', 'title', 'short_description', 'description', 'cost'
-                  'lesson_set')
+        fields = ('id', 'soon', 'title', 'image', 'short_description',
+                  'description', 'cost', 'lesson_set')
 
     purchased = Field(Boolean, required=True)
 
     def resolve_purchased(parent, info):
         return parent.purchased(info.context.user)
+
+    def resolve_description(parent, info):
+        if parent.published:
+            return parent.description
+        return ""
+
+    def resolve_cost(parent, info):
+        if parent.published:
+            return parent.cost
+        return Decimal(0)
+
+    def resolve_lesson_set(parent, info):
+        if parent.published:
+            return parent.lesson_set.all()
+        return Lesson.objects.none()
 
 
 class LessonType(DjangoObjectType):
@@ -43,9 +60,9 @@ class LessonType(DjangoObjectType):
             return parent.video
         return ""
 
-    def resolve_file(parent, info):
+    def resolve_addon(parent, info):
         if parent.course.purchased(info.context.user):
-            return parent.file
+            return parent.addon
         return None
 
 
@@ -53,11 +70,6 @@ class UserType(DjangoObjectType):
     class Meta:
         model = User
         fields = ('email', )
-
-    courses = List(NonNull(CourseType), required=True)
-
-    def resolve_courses(parent, info):
-        return parent.courses()
 
 
 class Query(ObjectType):
@@ -68,17 +80,17 @@ class Query(ObjectType):
     language = Field(NonNull(String))
 
     def resolve_courses(*args, **kwargs):
-        return Course.objects.all()
+        return Course.objects.filter(Q(published=True) | Q(soon=True)).all()
 
     def resolve_course(root, info, id):
         try:
-            return Course.objects.get(pk=id)
+            return Course.objects.get(Q(published=True) | Q(soon=True), pk=id)
         except Course.DoesNotExist:
             return None
 
     def resolve_lesson(root, info, id):
         try:
-            return Lesson.objects.get(pk=id)
+            return Lesson.objects.get(pk=id, course__published=True)
         except Lesson.DoesNotExist:
             return None
 
@@ -93,29 +105,25 @@ class Query(ObjectType):
 
 
 class LoginResult(ObjectType):
-    success = Field(NonNull(Boolean))
     user = Field(UserType)
+    courses = List(NonNull(CourseType))
     error = Field(String)
 
-    def resolve_success(parent, info):
-        return parent['success']
+    def resolve_user(parent, *args, **kwargs):
+        return parent['user']
 
-    def resolve_user(parent, info):
-        if 'user' in parent:
-            return parent['user']
-        return None
+    def resolve_courses(parent, *args, **kwargs):
+        return parent['courses']
 
     def resolve_error(parent, *args, **kwargs):
-        if 'error' in parent:
-            return parent['error']
-        return None
+        return parent['error']
 
 
 class LogoutResult(ObjectType):
     user = Field(UserType)
-    courses = List(NonNull(CourseType))
+    courses = List(NonNull(CourseType), required=True)
 
-    def resolve_user(parent, info):
+    def resolve_user(parent, *args, **kwargs):
         return parent['user']
 
     def resolve_courses(parent, *args, **kwargs):
@@ -123,22 +131,14 @@ class LogoutResult(ObjectType):
 
 
 class SetLanguageResult(ObjectType):
-    success = Field(NonNull(Boolean))
     language = Field(String)
     courses = List(NonNull(CourseType))
 
-    def resolve_success(parent, info):
-        return parent['success']
-
     def resolve_language(parent, info):
-        if 'language' in parent:
-            return parent['language']
-        return None
+        return parent['language']
 
     def resolve_courses(parent, info):
-        if 'courses' in parent:
-            return parent['courses']
-        return None
+        return parent['courses']
 
 
 class Mutation(ObjectType):
@@ -167,29 +167,40 @@ class Mutation(ObjectType):
         context = info.context
         if not context.user.is_authenticated:
             email = UserManager.normalize_email(email)
-            user = User.objects.get(email=email)
-            if not user.is_active:
-                error = 'Unverified email'
-            else:
-                user = authenticate(context, username=email, password=password)
-                if not user:
-                    error = 'Invalid credentials'
+            user = authenticate(context, username=email, password=password)
+            if not user:
+                error = 'Invalid credentials'
+                try:
+                    user = User.objects.get(email=email)
+                except User.DoesNotExist:
+                    pass
                 else:
-                    login(context, user)
-                    return {
-                        'success': True,
-                        'user': user,
-                    }
+                    if not user.is_active:
+                        error = 'Unverified email'
+            else:
+                login(context, user)
+                return {
+                    'user':
+                    user,
+                    'courses':
+                    Course.objects.filter(Q(published=True)
+                                          | Q(soon=True)).all(),
+                    'error':
+                    error,
+                }
         return {
-            'success': False,
+            'user': None,
+            'courses': None,
             'error': error,
         }
 
     def resolve_logout(root, info):
         logout(info.context)
         return {
-            'user': None,
-            'courses': Course.objects.all(),
+            'user':
+            None,
+            'courses':
+            Course.objects.filter(Q(published=True) | Q(soon=True)).all(),
         }
 
     def resolve_signup(root, info, email, password):
@@ -270,7 +281,8 @@ class Mutation(ObjectType):
 
     def resolve_create_order(root, info, id):
         user = info.context.user
-        if user.is_authenticated:
+        if user.is_authenticated and Course.objects.filter(
+                pk=id, published=True).exists():
             try:
                 return Order.objects.create(user_id=user.id, course_id=id).pk
             except Exception:
@@ -284,10 +296,12 @@ class Mutation(ObjectType):
             activate(language)
             info.context.acan_set_language_cookie = language
             return {
-                'success': True,
-                'language': laguage,
-                'courses': Course.objects.all(),
+                'language':
+                language,
+                'courses':
+                Course.objects.filter(Q(published=True) | Q(soon=True)).all(),
             }
         return {
-            'success': False,
+            'language': None,
+            'courses': None,
         }

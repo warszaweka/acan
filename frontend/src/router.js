@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
 import Home from './components/Home.vue';
-import Courses from './components/Courses.vue';
+import Widget from './components/Widget.vue';
 import Login from './components/Login.vue';
 import Signup from './components/Signup.vue';
 import EmailVerify from './components/EmailVerify.vue';
@@ -9,7 +9,7 @@ import RequestPasswordReset from './components/RequestPasswordReset.vue';
 import PasswordReset from './components/PasswordReset.vue';
 import User from './components/User.vue';
 import SetPassword from './components/SetPassword.vue';
-import Purchase from './components/Purchase.vue';
+import Payment from './components/Payment.vue';
 import PublicOffer from './components/PublicOffer.vue';
 import PrivacyPolicy from './components/PrivacyPolicy.vue';
 
@@ -25,17 +25,17 @@ export default new VueRouter({
     },
     {
       path: '/courses',
-      component: Courses,
+      component: Widget,
       name: 'courses',
     },
     {
       path: '/course/:id',
-      component: Courses,
+      component: Widget,
       name: 'course',
     },
     {
       path: '/lesson/:id',
-      component: Courses,
+      component: Widget,
       name: 'lesson',
     },
     {
@@ -74,9 +74,9 @@ export default new VueRouter({
       name: 'set_password',
     },
     {
-      path: '/purchase/:id',
-      component: Purchase,
-      name: 'purchase',
+      path: '/payment/:id',
+      component: Payment,
+      name: 'payment',
     },
     {
       path: '/public_offer',

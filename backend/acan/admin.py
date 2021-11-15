@@ -1,6 +1,8 @@
+import ffmpeg
 from django.contrib.admin import ModelAdmin, register, site
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
+from django.core.files.storage import default_storage
 from django.forms import CharField, ModelForm, PasswordInput
 from modeltranslation.admin import TranslationAdmin
 
@@ -14,7 +16,21 @@ class CourseAdmin(TranslationAdmin):
 
 @register(Lesson)
 class LessonAdmin(TranslationAdmin):
-    pass
+    def save_model(self, request, obj, *args, **kwargs):
+        super().save_model(request, obj, *args, **kwargs)
+        old_video = obj.video
+        new_video = f'lesson_{obj.id}_.m3u8'
+        new_video_path = default_storage.path(new_video)
+        ffmpeg.input(old_video.path).output(new_video_path,
+                                            acodec='aac',
+                                            vcodec='copy',
+                                            start_number=0,
+                                            hls_time=10,
+                                            hls_list_size=0,
+                                            f='hls').run()
+        old_video.delete(save=False)
+        obj.video = new_video
+        obj.save()
 
 
 class UserCreationForm(ModelForm):

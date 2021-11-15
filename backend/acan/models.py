@@ -5,15 +5,18 @@ from django.db.models import (CASCADE, PROTECT, BooleanField, CharField,
 
 
 class Course(Model):
+    published = BooleanField(default=False)
+    soon = BooleanField(default=False)
     title = CharField(max_length=128)
+    image = FileField(upload_to='images/')
     short_description = TextField()
     description = TextField()
     cost = DecimalField(max_digits=8, decimal_places=2)
 
     def purchased(self, user):
         if user.is_authenticated and __class__.objects.filter(
-                order__user__id=user.id, order__payed=True,
-                id=self.id).exists():
+                pk=self.id, order__user__id=user.id,
+                order__payed=True).exists():
             return True
         return False
 
@@ -24,7 +27,7 @@ class Lesson(Model):
     title = CharField(max_length=128)
     description = TextField()
     video = FileField()
-    addon = FileField(null=True, blank=True)
+    addon = FileField(null=True, blank=True, upload_to='addons/')
 
 
 class UserManager(BaseUserManager):
@@ -56,10 +59,6 @@ class User(AbstractBaseUser):
 
     def has_module_perms(self, *args, **kwargs):
         return True
-
-    def courses(self):
-        return Course.objects.filter(order__user__id=self.id,
-                                     order__payed=True).all()
 
 
 class Order(Model):
