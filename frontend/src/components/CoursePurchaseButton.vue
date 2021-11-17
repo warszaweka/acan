@@ -28,19 +28,24 @@ export default {
   ],
   methods: {
     async purchase() {
+      const { data: { createOrder: { data, signature } } } = await this.$apollo.mutate({
+        mutation: gql`
+              mutation ($id: String!) {
+                createOrder(id: $id) {
+                  data
+                  signature
+                }
+              }
+            `,
+        variables: {
+          id: this.course.id,
+        },
+      });
       this.$router.push({
         name: 'payment',
         params: {
-          id: (await this.$apollo.mutate({
-            mutation: gql`
-              mutation ($id: String!) {
-                createOrder(id: $id)
-              }
-            `,
-            variables: {
-              id: this.course.id,
-            },
-          })).data.createOrder,
+          data,
+          signature,
         },
       });
     },

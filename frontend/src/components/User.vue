@@ -60,6 +60,7 @@ export default {
               courses {
                 id
                 lessonSet {
+                  id
                   description
                   video
                   addon
@@ -79,6 +80,7 @@ export default {
                 courses {
                   id
                   lessonSet {
+                    id
                     description
                     video
                     addon

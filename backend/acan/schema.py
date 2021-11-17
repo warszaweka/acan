@@ -1,10 +1,14 @@
-from decimal import *
+from base64 import b64encode
+from decimal import Decimal
+from hashlib import sha1
+from json import dumps
 
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.db.models import Q
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.translation import activate, get_language
@@ -141,6 +145,17 @@ class SetLanguageResult(ObjectType):
         return parent['courses']
 
 
+class CreateOrderResult(ObjectType):
+    data = Field(String)
+    signature = Field(String)
+
+    def resolve_data(parent, info):
+        return parent['data']
+
+    def resolve_signature(parent, info):
+        return parent['signature']
+
+
 class Mutation(ObjectType):
     login = Field(NonNull(LoginResult),
                   email=String(required=True),
@@ -158,7 +173,7 @@ class Mutation(ObjectType):
                            uidb64=String(required=True),
                            token=String(required=True),
                            password=String(required=True))
-    create_order = Field(String, id=String(required=True))
+    create_order = Field(NonNull(CreateOrderResult), id=String(required=True))
     set_language = Field(NonNull(SetLanguageResult),
                          language=String(required=True))
 
@@ -281,13 +296,46 @@ class Mutation(ObjectType):
 
     def resolve_create_order(root, info, id):
         user = info.context.user
-        if user.is_authenticated and Course.objects.filter(
-                pk=id, published=True).exists():
+        if user.is_authenticated:
             try:
-                return Order.objects.create(user_id=user.id, course_id=id).pk
-            except Exception:
+                course = Course.objects.get(pk=id, published=True)
+            except Course.DoesNotExist:
                 pass
-        return None
+            else:
+                order = Order.objects.create(user_id=user.id, course_id=id)
+                data = b64encode(
+                    dumps({
+                        'version':
+                        '3',
+                        'public_key':
+                        settings.LIQPAY_PUBLIC_KEY,
+                        'action':
+                        'pay',
+                        'amount':
+                        str(course.cost),
+                        'currency':
+                        'UAH',
+                        'description':
+                        str(course.title),
+                        'order_id':
+                        str(order.id),
+                        'server_url':
+                        info.context.build_absolute_uri(
+                            reverse('acan:payment')),
+                    }).encode('utf-8')).decode('ascii')
+                return {
+                    'data':
+                    data,
+                    'signature':
+                    b64encode(
+                        sha1(
+                            f'{settings.LIQPAY_PRIVATE_KEY}{data}{settings.LIQPAY_PRIVATE_KEY}'
+                            .encode('utf-8')).digest()).decode('ascii'),
+                }
+        return {
+            'data': None,
+            'signature': None,
+        }
 
     def resolve_set_language(root, info, language):
         if language in [

@@ -1,12 +1,15 @@
+from base64 import b64encode
+from hashlib import sha1
 from re import fullmatch
 
+from acan.models import Course, Lesson
+from django.conf import settings
 from django.core.files.storage import default_storage
 from django.db.models import Q
 from django.http import FileResponse, HttpResponseNotFound, JsonResponse
 from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404
-
-from acan.models import Lesson, Course
+from django.views.decorators.csrf import csrf_exempt
 
 
 def csrf(request):
@@ -33,3 +36,16 @@ def media(request, relative_path):
     if allowed and default_storage.exists(relative_path):
         return FileResponse(default_storage.open(relative_path))
     return HttpResponseNotFound()
+
+
+@csrf_exempt
+def payment(request):
+    data = request.POST['data']
+    import sys  # DEBUG
+    print(data, file=sys.stderr)  # DEBUG
+    if b64encode(
+            sha1(settings.LIQPAY_PRIVATE_KEY + data +
+                 settings.LIQPAY_PRIVATE_KEY).digest()
+    ).decode('ascii') == request.POST['signature']:
+        pass
+    return HttpResponse()

@@ -74,7 +74,7 @@ export default new VueRouter({
       name: 'set_password',
     },
     {
-      path: '/payment/:id',
+      path: '/payment/:data/:signature',
       component: Payment,
       name: 'payment',
     },
