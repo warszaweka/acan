@@ -9,7 +9,6 @@ django = "*"
 graphene-django = "*"
 django-cors-headers = "*"
 django-modeltranslation = "*"
-sendgrid = "*"
 ffmpeg-python = "*"
 
 [dev-packages]
