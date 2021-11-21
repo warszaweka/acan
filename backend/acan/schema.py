@@ -5,6 +5,7 @@ from json import dumps
 
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
+from django.core.mail import send_mail
 from django.db import IntegrityError
 from django.db.models import Q
 from django.template.loader import render_to_string
@@ -14,8 +15,6 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.translation import activate, get_language
 from graphene import Boolean, Field, List, NonNull, ObjectType, String
 from graphene_django import DjangoObjectType
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
 
 from .models import Course, Lesson, Order, User, UserManager
 from .tokens import email_verify_token, password_reset_token
@@ -225,19 +224,18 @@ class Mutation(ObjectType):
             return 'Used email'
         else:
             try:
-                SendGridAPIClient(settings.ACAN_SENDGRID_API_KEY).send(
-                    Mail(from_email=settings.ACAN_EMAIL_FROM,
-                         to_emails=user.email,
-                         subject='Email verify',
-                         html_content=render_to_string(
-                             'acan/email_verify.html', {
-                                 'url':
-                                 settings.ACAN_EMAIL_VERIFY_URL,
-                                 'uidb64':
-                                 urlsafe_base64_encode(force_bytes(user.pk)),
-                                 'token':
-                                 email_verify_token.make_token(user),
-                             })))
+                send_mail(
+                    'Email verify',
+                    render_to_string(
+                        'acan/email_verify.html', {
+                            'url': settings.ACAN_EMAIL_VERIFY_URL,
+                            'uidb64': urlsafe_base64_encode(
+                                force_bytes(user.pk)),
+                            'token': email_verify_token.make_token(user),
+                        }),
+                    settings.ACAN_EMAIL_FROM,
+                    [user.email],
+                )
                 return None
             except Exception:
                 return 'Unvalid email'
@@ -269,17 +267,17 @@ class Mutation(ObjectType):
         except User.DoesNotExist:
             return 'Unused email'
         else:
-            SendGridAPIClient(settings.ACAN_SENDGRID_API_KEY).send(
-                Mail(from_email=settings.ACAN_EMAIL_FROM,
-                     to_emails=email,
-                     subject='Password reset',
-                     html_content=render_to_string(
-                         'acan/password_reset.html', {
-                             'url': settings.ACAN_PASSWORD_RESET_URL,
-                             'uidb64': urlsafe_base64_encode(
-                                 force_bytes(user.pk)),
-                             'token': password_reset_token.make_token(user),
-                         })))
+            send_mail(
+                'Password reset',
+                render_to_string(
+                    'acan/password_reset.html', {
+                        'url': settings.ACAN_PASSWORD_RESET_URL,
+                        'uidb64': urlsafe_base64_encode(force_bytes(user.pk)),
+                        'token': password_reset_token.make_token(user),
+                    }),
+                settings.ACAN_EMAIL_FROM,
+                [email],
+            )
             return None
 
     def resolve_password_reset(root, info, uidb64, token, password):
