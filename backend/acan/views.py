@@ -1,16 +1,18 @@
-from json import loads
-from base64 import b64encode, b64decode
+from base64 import b64decode, b64encode
 from hashlib import sha1
+from json import loads
 from re import fullmatch
 
-from acan.models import Course, Lesson
 from django.conf import settings
 from django.core.files.storage import default_storage
 from django.db.models import Q
-from django.http import FileResponse, HttpResponseNotFound, JsonResponse
+from django.http import (FileResponse, HttpResponse, HttpResponseNotFound,
+                         JsonResponse)
 from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+
+from acan.models import Course, Lesson, Order
 
 
 def csrf(request):
@@ -43,9 +45,13 @@ def media(request, relative_path):
 def payment(request):
     data = request.POST['data']
     if b64encode(
-            sha1(settings.LIQPAY_PRIVATE_KEY + data +
-                 settings.LIQPAY_PRIVATE_KEY).digest()
-    ).decode('ascii') == request.POST['signature']:
-        import sys  # DEBUG
-        print(loads(b64decode(data).decode('utf-8')), file=sys.stderr)  # DEBUG
+            sha1(
+                f'{settings.LIQPAY_PRIVATE_KEY}{data}{settings.LIQPAY_PRIVATE_KEY}'
+                .encode('utf-8')).digest()).decode(
+                    'ascii') == request.POST['signature']:
+        clear_data = loads(b64decode(data).decode('utf-8'))
+        if clear_data['status'] == 'success':
+            order = Order.objects.get(pk=clear_data['order_id'])
+            order.payed = True
+            order.save()
     return HttpResponse()
