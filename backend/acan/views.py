@@ -1,4 +1,5 @@
-from base64 import b64encode
+from json import loads
+from base64 import b64encode, b64decode
 from hashlib import sha1
 from re import fullmatch
 
@@ -41,11 +42,10 @@ def media(request, relative_path):
 @csrf_exempt
 def payment(request):
     data = request.POST['data']
-    import sys  # DEBUG
-    print(data, file=sys.stderr)  # DEBUG
     if b64encode(
             sha1(settings.LIQPAY_PRIVATE_KEY + data +
                  settings.LIQPAY_PRIVATE_KEY).digest()
     ).decode('ascii') == request.POST['signature']:
-        pass
+        import sys  # DEBUG
+        print(loads(b64decode(data).decode('utf-8')), file=sys.stderr)  # DEBUG
     return HttpResponse()

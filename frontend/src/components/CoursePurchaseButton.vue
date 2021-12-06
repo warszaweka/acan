@@ -21,6 +21,7 @@ export default {
   data() {
     return {
       course: null,
+      user: null,
     };
   },
   props: [
@@ -28,26 +29,32 @@ export default {
   ],
   methods: {
     async purchase() {
-      const { data: { createOrder: { data, signature } } } = await this.$apollo.mutate({
-        mutation: gql`
-              mutation ($id: String!) {
-                createOrder(id: $id) {
-                  data
-                  signature
+      if (this.user) {
+        const { data: { createOrder: { data, signature } } } = await this.$apollo.mutate({
+          mutation: gql`
+                mutation ($id: String!) {
+                  createOrder(id: $id) {
+                    data
+                    signature
+                  }
                 }
-              }
-            `,
-        variables: {
-          id: this.course.id,
-        },
-      });
-      this.$router.push({
-        name: 'payment',
-        params: {
-          data,
-          signature,
-        },
-      });
+              `,
+          variables: {
+            id: this.course.id,
+          },
+        });
+        this.$router.push({
+          name: 'payment',
+          params: {
+            data,
+            signature,
+          },
+        });
+      } else {
+        this.$router.push({
+          name: 'login',
+        });
+      }
     },
   },
   apollo: {
@@ -66,6 +73,13 @@ export default {
         };
       },
     },
+    user: gql`
+      query {
+        user {
+          email
+        }
+      }
+    `,
   },
 };
 </script>
