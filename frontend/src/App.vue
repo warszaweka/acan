@@ -183,50 +183,14 @@ export default {
       await this.$apollo.mutate({
         mutation: gql`
           mutation ($language: String!) {
-            setLanguage(language: $language) {
-              language
-              courses {
-                id
-                title
-                shortDescription
-                description
-                lessonSet {
-                  id
-                  title
-                  description
-                }
-              }
-            }
+            setLanguage(language: $language)
           }
         `,
         variables: {
           language,
         },
-        update(store, { data: { setLanguage } }) {
-          store.writeQuery({
-            query: gql`
-              query {
-                language
-                courses {
-                  id
-                  title
-                  shortDescription
-                  description
-                  lessonSet {
-                    id
-                    title
-                    description
-                  }
-                }
-              }
-            `,
-            data: {
-              language: setLanguage.language,
-              courses: setLanguage.courses,
-            },
-          });
-        },
       });
+      await this.$apollo.getClient().resetStore();
     },
   },
   apollo: {

@@ -103,59 +103,19 @@ export default {
       const { data: { login } } = (await this.$apollo.mutate({
         mutation: gql`
           mutation($email: String!, $password: String!) {
-            login(email: $email, password: $password) {
-              user {
-                email
-              }
-              courses {
-                id
-                lessonSet {
-                  description
-                  video
-                  addon
-                }
-                purchased
-              }
-              error
-            }
+            login(email: $email, password: $password)
           }
         `,
         variables: {
           email: this.email,
           password: this.password,
         },
-        update(store, result) {
-          if (!result.data.login.error) {
-            store.writeQuery({
-              query: gql`
-                query {
-                  user {
-                    email
-                  }
-                  courses {
-                    id
-                    lessonSet {
-                      id
-                      description
-                      video
-                      addon
-                    }
-                    purchased
-                  }
-                }
-              `,
-              data: {
-                user: result.data.login.user,
-                courses: result.data.login.courses,
-              },
-            });
-          }
-        },
       }));
-      if (login.error) {
-        this.error = login.error;
+      if (login) {
+        this.error = login;
       } else {
         refreshToken();
+        await this.$apollo.getClient().resetStore();
         this.$router.push({
           name: 'home',
         });

@@ -26,7 +26,7 @@ class CourseType(DjangoObjectType):
         fields = ('id', 'soon', 'title', 'image', 'short_description',
                   'description', 'cost', 'lesson_set')
 
-    purchased = Field(Boolean, required=True)
+    purchased = Boolean(required=True)
 
     def resolve_purchased(parent, info):
         return parent.purchased(info.context.user)
@@ -66,7 +66,6 @@ class LessonType(DjangoObjectType):
     def resolve_addon(parent, info):
         if parent.course.purchased(info.context.user):
             return parent.addon
-        return None
 
 
 class UserType(DjangoObjectType):
@@ -80,73 +79,35 @@ class Query(ObjectType):
     course = Field(CourseType, id=String(required=True))
     lesson = Field(LessonType, id=String(required=True))
     user = Field(UserType)
-    language = Field(NonNull(String))
+    language = String(required=True)
 
-    def resolve_courses(*args, **kwargs):
+    def resolve_courses(root, info):
         return Course.objects.filter(Q(published=True) | Q(soon=True)).all()
 
     def resolve_course(root, info, id):
         try:
             return Course.objects.get(Q(published=True) | Q(soon=True), pk=id)
         except Course.DoesNotExist:
-            return None
+            pass
 
     def resolve_lesson(root, info, id):
         try:
             return Lesson.objects.get(pk=id, course__published=True)
         except Lesson.DoesNotExist:
-            return None
+            pass
 
     def resolve_user(root, info):
         user = info.context.user
         if user.is_authenticated:
             return user
-        return None
 
-    def resolve_language(*args, **kwargs):
+    def resolve_language(root, info):
         return get_language()
 
 
-class LoginResult(ObjectType):
-    user = Field(UserType)
-    courses = List(NonNull(CourseType))
-    error = Field(String)
-
-    def resolve_user(parent, *args, **kwargs):
-        return parent['user']
-
-    def resolve_courses(parent, *args, **kwargs):
-        return parent['courses']
-
-    def resolve_error(parent, *args, **kwargs):
-        return parent['error']
-
-
-class LogoutResult(ObjectType):
-    user = Field(UserType)
-    courses = List(NonNull(CourseType), required=True)
-
-    def resolve_user(parent, *args, **kwargs):
-        return parent['user']
-
-    def resolve_courses(parent, *args, **kwargs):
-        return parent['courses']
-
-
-class SetLanguageResult(ObjectType):
-    language = Field(String)
-    courses = List(NonNull(CourseType))
-
-    def resolve_language(parent, info):
-        return parent['language']
-
-    def resolve_courses(parent, info):
-        return parent['courses']
-
-
 class CreateOrderResult(ObjectType):
-    data = Field(String)
-    signature = Field(String)
+    data = String(required=True)
+    signature = String(required=True)
 
     def resolve_data(parent, info):
         return parent['data']
@@ -156,66 +117,49 @@ class CreateOrderResult(ObjectType):
 
 
 class Mutation(ObjectType):
-    login = Field(NonNull(LoginResult),
+    login = Field(String,
                   email=String(required=True),
                   password=String(required=True))
-    logout = NonNull(LogoutResult)
+    logout = Boolean(required=True)
     signup = Field(String,
                    email=String(required=True),
                    password=String(required=True))
-    email_verify = Field(NonNull(Boolean),
+    email_verify = Field(Boolean,
+                         required=True,
                          uidb64=String(required=True),
                          token=String(required=True))
-    set_password = Field(NonNull(Boolean), password=String(required=True))
+    set_password = Field(Boolean,
+                         required=True,
+                         password=String(required=True))
     request_password_reset = Field(String, email=String(required=True))
     password_reset = Field(Boolean,
+                           required=True,
                            uidb64=String(required=True),
                            token=String(required=True),
                            password=String(required=True))
-    create_order = Field(NonNull(CreateOrderResult), id=String(required=True))
-    set_language = Field(NonNull(SetLanguageResult),
+    create_order = Field(CreateOrderResult, id=String(required=True))
+    set_language = Field(Boolean,
+                         required=True,
                          language=String(required=True))
 
     def resolve_login(root, info, email, password):
-        error = None
         context = info.context
-        if not context.user.is_authenticated:
-            email = UserManager.normalize_email(email)
-            user = authenticate(context, username=email, password=password)
-            if not user:
-                error = 'Invalid credentials'
-                try:
-                    user = User.objects.get(email=email)
-                except User.DoesNotExist:
-                    pass
-                else:
-                    if not user.is_active:
-                        error = 'Unverified email'
+        email = UserManager.normalize_email(email)
+        user = authenticate(context, username=email, password=password)
+        if not user:
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                pass
             else:
-                login(context, user)
-                return {
-                    'user':
-                    user,
-                    'courses':
-                    Course.objects.filter(Q(published=True)
-                                          | Q(soon=True)).all(),
-                    'error':
-                    error,
-                }
-        return {
-            'user': None,
-            'courses': None,
-            'error': error,
-        }
+                if not user.is_active:
+                    return 'Unverified email'
+            return 'Invalid credentials'
+        login(context, user)
 
     def resolve_logout(root, info):
         logout(info.context)
-        return {
-            'user':
-            None,
-            'courses':
-            Course.objects.filter(Q(published=True) | Q(soon=True)).all(),
-        }
+        return True
 
     def resolve_signup(root, info, email, password):
         try:
@@ -236,7 +180,6 @@ class Mutation(ObjectType):
                     settings.ACAN_EMAIL_FROM,
                     [user.email],
                 )
-                return None
             except Exception:
                 return 'Unvalid email'
 
@@ -247,18 +190,16 @@ class Mutation(ObjectType):
             if email_verify_token.check_token(user, token):
                 user.is_active = True
                 user.save()
-                return True
         except Exception:
             pass
-        return False
+        return True
 
     def resolve_set_password(root, info, password):
         user = info.context.user
         if user.is_authenticated:
             user.set_password(password)
             user.save()
-            return True
-        return False
+        return True
 
     def resolve_request_password_reset(root, info, email):
         email = UserManager.normalize_email(email)
@@ -278,7 +219,6 @@ class Mutation(ObjectType):
                 settings.ACAN_EMAIL_FROM,
                 [email],
             )
-            return None
 
     def resolve_password_reset(root, info, uidb64, token, password):
         try:
@@ -287,10 +227,9 @@ class Mutation(ObjectType):
             if password_reset_token.check_token(user, token):
                 user.set_password(password)
                 user.save()
-                return True
         except Exception:
             pass
-        return False
+        return True
 
     def resolve_create_order(root, info, id):
         user = info.context.user
@@ -330,10 +269,6 @@ class Mutation(ObjectType):
                             f'{settings.LIQPAY_PRIVATE_KEY}{data}{settings.LIQPAY_PRIVATE_KEY}'
                             .encode('utf-8')).digest()).decode('ascii'),
                 }
-        return {
-            'data': None,
-            'signature': None,
-        }
 
     def resolve_set_language(root, info, language):
         if language in [
@@ -341,13 +276,4 @@ class Mutation(ObjectType):
         ]:
             activate(language)
             info.context.acan_set_language_cookie = language
-            return {
-                'language':
-                language,
-                'courses':
-                Course.objects.filter(Q(published=True) | Q(soon=True)).all(),
-            }
-        return {
-            'language': None,
-            'courses': None,
-        }
+        return True

@@ -14,8 +14,6 @@
 </template>
 
 <script>
-import gql from 'graphql-tag';
-
 export default {
   mounted() {
     window.LiqPayCheckoutCallback = () => {
@@ -26,28 +24,13 @@ export default {
         mode: 'embed',
       }).on('liqpay.callback', async (data) => {
         if (data.result === 'ok') {
-          await this.$apollo.getClient().refetchQueries({
-            include: [
-              gql`
-                query {
-                  courses {
-                    id
-                    lessonSet {
-                      id
-                      description
-                      video
-                      addon
-                    }
-                    purchased
-                  }
-                }
-              `,
-            ],
-          });
+          await this.$apollo.getClient().resetStore();
+          setTimeout(() => {
+            this.$router.push({
+              name: 'home',
+            });
+          }, 5000);
         }
-        this.$router.push({
-          name: 'home',
-        });
       });
     };
     const liqpayScript = document.createElement('script');

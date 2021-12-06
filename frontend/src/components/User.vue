@@ -53,49 +53,11 @@ export default {
       await this.$apollo.mutate({
         mutation: gql`
           mutation {
-            logout {
-              user {
-                email
-              }
-              courses {
-                id
-                lessonSet {
-                  id
-                  description
-                  video
-                  addon
-                }
-                purchased
-              }
-            }
+            logout
           }
         `,
-        update(store, result) {
-          store.writeQuery({
-            query: gql`
-              query {
-                user {
-                  email
-                }
-                courses {
-                  id
-                  lessonSet {
-                    id
-                    description
-                    video
-                    addon
-                  }
-                  purchased
-                }
-              }
-            `,
-            data: {
-              user: result.data.logout.user,
-              courses: result.data.logout.courses,
-            },
-          });
-        },
       });
+      await this.$apollo.getClient().resetStore();
       this.$router.push({
         name: 'home',
       });
