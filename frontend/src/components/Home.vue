@@ -148,9 +148,10 @@
             </div>
             <div>
               <p
-                v-for"article_paragraph in article_text"
+                v-for="article_paragraph in article_text.entries()"
+                :key="article_paragraph[0]"
                 >
-                {{ article_paragraph }}
+                {{ article_paragraph[1] }}
               </p>
             </div>
           </div>
