@@ -6,4 +6,6 @@
 /frontend/node_modules/
 /frontend/dist/
 /frontend/src/environment.js
+/frontend/src/local_environment.js
+/frontend/src/prod_environment.js
 /psswrd
