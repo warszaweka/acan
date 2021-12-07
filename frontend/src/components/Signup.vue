@@ -88,7 +88,7 @@
               {{ public_offer_privacy_policy_agreement_middle }}
             </span>
             <b-link
-              :to="{ name: 'pubic_offer' }"
+              :to="{ name: 'public_offer' }"
               >
               {{ public_offer_link_text }}
             </b-link>
