@@ -146,14 +146,12 @@
               class="mb-5"
               >
             </div>
-            <div>
-              <p
-                v-for="article_paragraph in article_text.entries()"
-                :key="article_paragraph[0]"
-                >
-                {{ article_paragraph[1] }}
-              </p>
-            </div>
+            <p
+              v-for="article_paragraph in article_text.entries()"
+              :key="article_paragraph[0]"
+              >
+              {{ article_paragraph[1] }}
+            </p>
           </div>
           <div
             class="my-5"

@@ -14,7 +14,15 @@
 </template>
 
 <script>
+import gql from 'graphql-tag';
+
 export default {
+  data() {
+    return {
+      ok: false,
+      course: null,
+    };
+  },
   mounted() {
     window.LiqPayCheckoutCallback = () => {
       window.LiqPayCheckout.init({
@@ -25,17 +33,41 @@ export default {
       }).on('liqpay.callback', async (data) => {
         if (data.result === 'ok') {
           await this.$apollo.getClient().resetStore();
-          setTimeout(() => {
-            this.$router.push({
-              name: 'home',
-            });
-          }, 5000);
+          this.ok = true;
         }
       });
     };
     const liqpayScript = document.createElement('script');
     liqpayScript.setAttribute('src', '//static.liqpay.ua/libjs/checkout.js');
     document.head.appendChild(liqpayScript);
+  },
+  apollo: {
+    course: {
+      query: gql`
+        query($id: String!) {
+          course(id: $id) {
+            id
+            purchased
+          }
+        }
+      `,
+    },
+    variables() {
+      return {
+        id: this.$route.params.id,
+      };
+    },
+    pollInterval: 1000,
+    result({ data: { course: { purchased } } }) {
+      if (purchased) {
+        this.$router.push({
+          name: 'home',
+        });
+      }
+    },
+    skip() {
+      return this.ok;
+    },
   },
 };
 </script>

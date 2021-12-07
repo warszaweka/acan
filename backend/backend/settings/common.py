@@ -51,6 +51,6 @@ SESSION_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SECURE = True
 STATIC_ROOT = BASE_DIR / 'static'
 GRAPHENE = {
-    "SCHEMA": "backend.schema.schema",
+    'SCHEMA': 'backend.schema.schema',
 }
 CORS_ALLOW_CREDENTIALS = True

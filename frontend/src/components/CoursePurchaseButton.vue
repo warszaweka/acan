@@ -32,13 +32,13 @@ export default {
       if (this.user) {
         const { data: { createOrder: { data, signature } } } = await this.$apollo.mutate({
           mutation: gql`
-                mutation ($id: String!) {
-                  createOrder(id: $id) {
-                    data
-                    signature
-                  }
-                }
-              `,
+            mutation ($id: String!) {
+              createOrder(id: $id) {
+                data
+                signature
+              }
+            }
+          `,
           variables: {
             id: this.course.id,
           },
@@ -46,6 +46,7 @@ export default {
         this.$router.push({
           name: 'payment',
           params: {
+            id: this.course.id,
             data,
             signature,
           },

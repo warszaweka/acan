@@ -2,11 +2,12 @@ from base64 import b64encode
 from decimal import Decimal
 from hashlib import sha1
 from json import dumps
+from smtplib import SMTPRecipientsRefused
 
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.core.mail import send_mail
-from django.db import IntegrityError
+from django.db import DataError, IntegrityError
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -71,7 +72,7 @@ class LessonType(DjangoObjectType):
 class UserType(DjangoObjectType):
     class Meta:
         model = User
-        fields = ('email', )
+        fields = ('email', 'phone', 'first_name', 'last_name', 'mailing_list')
 
 
 class Query(ObjectType):
@@ -123,7 +124,11 @@ class Mutation(ObjectType):
     logout = Boolean(required=True)
     signup = Field(String,
                    email=String(required=True),
-                   password=String(required=True))
+                   password=String(required=True),
+                   phone=String(required=True),
+                   first_name=String(required=True),
+                   last_name=String(required=True),
+                   mailing_list=Boolean())
     email_verify = Field(Boolean,
                          required=True,
                          uidb64=String(required=True),
@@ -131,6 +136,9 @@ class Mutation(ObjectType):
     set_password = Field(Boolean,
                          required=True,
                          password=String(required=True))
+    set_mailing_list = Field(Boolean,
+                             required=True,
+                             mailing_list=Boolean(required=True))
     request_password_reset = Field(String, email=String(required=True))
     password_reset = Field(Boolean,
                            required=True,
@@ -161,11 +169,27 @@ class Mutation(ObjectType):
         logout(info.context)
         return True
 
-    def resolve_signup(root, info, email, password):
+    def resolve_signup(root,
+                       info,
+                       email,
+                       password,
+                       phone,
+                       first_name,
+                       last_name,
+                       mailing_list=None):
         try:
-            user = User.objects.create_user(email=email, password=password)
+            user = User.objects.create_user(email=email,
+                                            password=password,
+                                            phone=phone,
+                                            first_name=first_name,
+                                            last_name=last_name)
+            if mailing_list:
+                user.mailing_list = mailing_list
+                user.save()
         except IntegrityError:
             return 'Used email'
+        except DataError:
+            return 'Unvalid values'
         else:
             try:
                 send_mail(
@@ -180,7 +204,8 @@ class Mutation(ObjectType):
                     settings.ACAN_EMAIL_FROM,
                     [user.email],
                 )
-            except Exception:
+            except SMTPRecipientsRefused:
+                user.delete()
                 return 'Unvalid email'
 
     def resolve_email_verify(root, info, uidb64, token):
@@ -198,6 +223,13 @@ class Mutation(ObjectType):
         user = info.context.user
         if user.is_authenticated:
             user.set_password(password)
+            user.save()
+        return True
+
+    def resolve_set_mailing_list(root, info, mailing_list):
+        user = info.context.user
+        if user.is_authenticated:
+            user.mailing_list = mailing_list
             user.save()
         return True
 

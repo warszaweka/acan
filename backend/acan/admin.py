@@ -11,11 +11,18 @@ from .models import Course, Lesson, Order, User
 
 @register(Course)
 class CourseAdmin(TranslationAdmin):
-    pass
+    list_display = ('title', 'cost', 'published', 'soon')
+    list_filter = ('published', 'soon')
+    search_fields = ('title', )
+    ordering = ('title', 'cost')
 
 
 @register(Lesson)
 class LessonAdmin(TranslationAdmin):
+    list_display = ('order', 'title', 'course')
+    search_fields = ('title', 'course')
+    ordering = ('order', 'title', 'course')
+
     def save_model(self, request, obj, *args, **kwargs):
         super().save_model(request, obj, *args, **kwargs)
         old_video = obj.video
@@ -38,7 +45,7 @@ class UserCreationForm(ModelForm):
 
     class Meta:
         model = User
-        fields = ('email', )
+        fields = ('email', 'phone', 'first_name', 'last_name', 'mailing_list')
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -51,7 +58,7 @@ class UserCreationForm(ModelForm):
 class UserChangeForm(ModelForm):
     class Meta:
         model = User
-        fields = ('is_staff', 'is_active')
+        fields = ('mailing_list', 'is_staff')
 
 
 @register(User)
@@ -59,15 +66,16 @@ class UserAdmin(BaseUserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
 
-    list_display = ('email', 'is_staff', 'is_active')
-    list_filter = ('is_staff', 'is_active')
-    fieldsets = ((None, {'fields': ('is_staff', 'is_active')}), )
+    list_display = ('email', 'phone', 'first_name', 'last_name',
+                    'mailing_list', 'is_staff', 'is_active')
+    list_filter = ('mailing_list', 'is_staff', 'is_active')
+    fieldsets = ((None, {'fields': ('mailing_list', 'is_staff')}), )
     add_fieldsets = ((None, {
-        'fields': ('email', 'password'),
+        'fields': ('email', 'password', 'phone', 'first_name', 'last_name',
+                   'mailing_list'),
     }), )
-    search_fields = ('email', )
-    ordering = ('email', )
-    filter_horizontal = ()
+    search_fields = ('email', 'phone', 'first_name', 'last_name')
+    ordering = ('email', 'phone', 'first_name', 'last_name')
 
 
 site.unregister(Group)
@@ -75,4 +83,7 @@ site.unregister(Group)
 
 @register(Order)
 class OrderAdmin(ModelAdmin):
-    pass
+    list_display = ('course', 'user', 'payed')
+    list_filter = ('payed', )
+    search_fields = ('course', 'user')
+    ordering = ('course', 'user')

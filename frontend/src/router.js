@@ -9,6 +9,7 @@ import RequestPasswordReset from './components/RequestPasswordReset.vue';
 import PasswordReset from './components/PasswordReset.vue';
 import User from './components/User.vue';
 import SetPassword from './components/SetPassword.vue';
+import SetMailingList from './components/SetMailingList.vue';
 import Payment from './components/Payment.vue';
 import PublicOffer from './components/PublicOffer.vue';
 import PrivacyPolicy from './components/PrivacyPolicy.vue';
@@ -74,7 +75,12 @@ export default new VueRouter({
       name: 'set_password',
     },
     {
-      path: '/payment/:data/:signature',
+      path: '/set_mailing_list',
+      component: SetMailingList,
+      name: 'set_mailing_list',
+    },
+    {
+      path: '/payment/:id/:data/:signature',
       component: Payment,
       name: 'payment',
     },

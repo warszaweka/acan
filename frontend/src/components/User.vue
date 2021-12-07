@@ -8,7 +8,22 @@
           <div
             class="mb-3"
             >
+            <span>
+              {{ user.firstName }}
+            </span>
+            <span>
+              {{ user.lastName }}
+            </span>
+          </div>
+          <div
+            class="mb-3"
+            >
             {{ user.email }}
+          </div>
+          <div
+            class="mb-3"
+            >
+            {{ user.phone }}
           </div>
           <div>
             <b-button
@@ -22,6 +37,12 @@
               class="mx-3"
               >
               {{ set_password_button_text }}
+            </b-button>
+            <b-button
+              :to="{ name: 'set_mailing_list' }"
+              class="mx-3"
+              >
+              {{ set_mailing_list_button_text }}
             </b-button>
           </div>
         </div>
@@ -47,6 +68,9 @@ export default {
     set_password_button_text() {
       return this.language === 'ru' ? 'Изменить пароль' : 'Змінити пароль';
     },
+    set_mailing_list_button_text() {
+      return this.language === 'ru' ? 'Изменить настройки рассылки' : 'Змінити налаштування розсилання';
+    },
   },
   methods: {
     async logout() {
@@ -68,6 +92,9 @@ export default {
       query {
         user {
           email
+          phone
+          firstName
+          lastName
         }
       }
     `,
