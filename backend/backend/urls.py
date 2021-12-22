@@ -5,7 +5,6 @@ from graphene_django.views import GraphQLView
 
 urlpatterns = [
     path('admin/', site.urls),
-    path('graphql',
-         GraphQLView.as_view(graphiql=True if settings.DEBUG else False)),
+    path('graphql', GraphQLView.as_view(graphiql=settings.DEBUG)),
     path('acan/', include('acan.urls')),
 ]
