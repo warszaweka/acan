@@ -44,7 +44,7 @@ class CourseType(DjangoObjectType):
 
     def resolve_lesson_set(parent, info):
         if parent.published:
-            return parent.lesson_set.all()
+            return parent.lesson_set.order_by('order').all()
         return Lesson.objects.none()
 
 
