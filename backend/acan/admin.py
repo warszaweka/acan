@@ -23,21 +23,22 @@ class LessonAdmin(TranslationAdmin):
     search_fields = ('title', 'course')
     ordering = ('order', 'title', 'course')
 
-    def save_model(self, request, obj, *args, **kwargs):
-        super().save_model(request, obj, *args, **kwargs)
-        old_video = obj.video
-        new_video = f'lesson_{obj.id}_.m3u8'
-        new_video_path = default_storage.path(new_video)
-        ffmpeg.input(old_video.path).output(new_video_path,
-                                            acodec='aac',
-                                            vcodec='copy',
-                                            start_number=0,
-                                            hls_time=10,
-                                            hls_list_size=0,
-                                            f='hls').run()
-        old_video.delete(save=False)
-        obj.video = new_video
-        obj.save()
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if 'video' in form.changed_data:
+            old_video = obj.video
+            new_video = f'lesson_{obj.id}_.m3u8'
+            new_video_path = default_storage.path(new_video)
+            ffmpeg.input(old_video.path).output(new_video_path,
+                                                acodec='aac',
+                                                vcodec='copy',
+                                                start_number=0,
+                                                hls_time=10,
+                                                hls_list_size=0,
+                                                f='hls').run()
+            old_video.delete(save=False)
+            obj.video = new_video
+            obj.save()
 
 
 class UserCreationForm(ModelForm):

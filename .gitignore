@@ -9,3 +9,5 @@
 /frontend/src/local_environment.js
 /frontend/src/prod_environment.js
 /psswrd
+/.mypy_cache/
+/.ropeproject/
