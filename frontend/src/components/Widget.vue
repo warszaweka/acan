@@ -66,9 +66,10 @@
           >
           <b-list-group-item
             v-for="lesson in course.lessonSet"
-            :key="lesson.order"
+            :key="lesson.id"
             :to="course.purchased ? { name: 'lesson', params: { id: lesson.id } } : null"
             :active="$route.name === 'lesson' && $data.lesson && $data.lesson.id === lesson.id"
+            @click="top"
             >
             <span
               class="font-weight-bold"
@@ -110,13 +111,29 @@
             >
           </video-player>
         </div>
-        <div
-          v-if="lesson.addon"
-          >
+        <div>
           <b-button
+            v-if="lesson.addon"
             :href="addon_button_url"
+            class="mx-3"
             >
             {{ addon_button_text }}
+          </b-button>
+          <b-button
+            v-if="lesson.previous"
+            :to="{ name: 'lesson', params: { id: lesson.previous.id } }"
+            @click="top"
+            class="mx-3"
+            >
+            {{ previous_button_text }}
+          </b-button>
+          <b-button
+            v-if="lesson.next"
+            :to="{ name: 'lesson', params: { id: lesson.next.id } }"
+            @click="top"
+            class="mx-3"
+            >
+            {{ next_button_text }}
           </b-button>
         </div>
       </b-col>
@@ -156,6 +173,20 @@ export default {
     },
     addon_button_url() {
       return `${this.media}/${this.lesson.addon}`;
+    },
+    previous_button_text() {
+      return this.language === 'ru' ? 'Предыдущий' : 'Попередній';
+    },
+    next_button_text() {
+      return this.language === 'ru' ? 'Следующий' : 'Наступний';
+    },
+  },
+  methods: {
+    top() {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
     },
   },
   apollo: {
@@ -210,6 +241,12 @@ export default {
             description
             video
             addon
+            previous {
+              id
+            }
+            next {
+              id
+            }
           }
         }
       `,

@@ -1,5 +1,9 @@
+/backend/.mypy_cache/
+/backend/.ropeproject/
 /backend/Pipfile
 /backend/Pipfile.lock
+/backend/mypy.ini
+/backend/.pydocstyle.ini
 /backend/static/
 /backend/media/
 /backend/backend/settings/environment.py
@@ -9,5 +13,3 @@
 /frontend/src/local_environment.js
 /frontend/src/prod_environment.js
 /psswrd
-/.mypy_cache/
-/.ropeproject/

@@ -17,11 +17,12 @@ from django.utils.translation import activate, get_language
 from graphene import Boolean, Field, List, NonNull, ObjectType, String
 from graphene_django import DjangoObjectType
 
-from .models import Course, Lesson, Order, User, UserManager
+from .models import Article, Course, Lesson, Order, User, UserManager
 from .tokens import email_verify_token, password_reset_token
 
 
 class CourseType(DjangoObjectType):
+
     class Meta:
         model = Course
         fields = ('id', 'soon', 'title', 'image', 'short_description',
@@ -49,10 +50,26 @@ class CourseType(DjangoObjectType):
 
 
 class LessonType(DjangoObjectType):
+
     class Meta:
         model = Lesson
         fields = ('id', 'course', 'order', 'title', 'description', 'video',
                   'addon')
+
+    previous = Field(lambda: LessonType)
+    next = Field(lambda: LessonType)
+
+    def resolve_previous(parent, info):
+        try:
+            return parent.course.lesson_set.get(order=parent.order - 1)
+        except Lesson.DoesNotExist:
+            pass
+
+    def resolve_next(parent, info):
+        try:
+            return parent.course.lesson_set.get(order=parent.order + 1)
+        except Lesson.DoesNotExist:
+            pass
 
     def resolve_description(parent, info):
         if parent.course.purchased(info.context.user):
@@ -70,9 +87,17 @@ class LessonType(DjangoObjectType):
 
 
 class UserType(DjangoObjectType):
+
     class Meta:
         model = User
         fields = ('email', 'phone', 'first_name', 'last_name', 'mailing_list')
+
+
+class ArticleType(DjangoObjectType):
+
+    class Meta:
+        model = Article
+        fields = ('id', 'title', 'image', 'text')
 
 
 class Query(ObjectType):
@@ -81,9 +106,11 @@ class Query(ObjectType):
     lesson = Field(LessonType, id=String(required=True))
     user = Field(UserType)
     language = String(required=True)
+    articles = List(NonNull(ArticleType), required=True)
 
     def resolve_courses(root, info):
-        return Course.objects.filter(Q(published=True) | Q(soon=True)).all()
+        return Course.objects.order_by('order_int').filter(
+            Q(published=True) | Q(soon=True)).all()
 
     def resolve_course(root, info, id):
         try:
@@ -104,6 +131,9 @@ class Query(ObjectType):
 
     def resolve_language(root, info):
         return get_language()
+
+    def resolve_articles(root, info):
+        return Article.objects.order_by('order').all()
 
 
 class CreateOrderResult(ObjectType):
@@ -297,9 +327,9 @@ class Mutation(ObjectType):
                     data,
                     'signature':
                     b64encode(
-                        sha1(
-                            f'{settings.LIQPAY_PRIVATE_KEY}{data}{settings.LIQPAY_PRIVATE_KEY}'
-                            .encode('utf-8')).digest()).decode('ascii'),
+                        sha1((f'{settings.LIQPAY_PRIVATE_KEY}{data}' +
+                              settings.LIQPAY_PRIVATE_KEY
+                              ).encode('utf-8')).digest()).decode('ascii'),
                 }
 
     def resolve_set_language(root, info, language):

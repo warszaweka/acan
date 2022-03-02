@@ -42,10 +42,56 @@
             >
             {{ login_link_text }}
           </b-nav-item>
+          <b-nav-item
+            href="#contacts"
+            >
+            {{ contacts_link_text }}
+          </b-nav-item>
+          <b-nav-item
+            :to="{ name: 'service' }"
+            >
+            {{ service_link_text }}
+          </b-nav-item>
         </b-navbar-nav>
         <b-navbar-nav
           class="ml-auto"
           >
+          <b-link
+            href="#"
+            class="mx-1 social-container"
+            >
+            <img
+              :src="require('./assets/images/facebook.svg')"
+              class="social"
+              >
+          </b-link>
+          <b-link
+            href="https://instagram.com/analytics.academy"
+            class="mx-1 social-container"
+            >
+            <img
+              :src="require('./assets/images/instagram.svg')"
+              class="social"
+              >
+          </b-link>
+          <b-link
+            href="#"
+            class="mx-1 social-container"
+            >
+            <img
+              :src="require('./assets/images/linkedin.svg')"
+              class="social"
+              >
+          </b-link>
+          <b-link
+            href="https://t.me/analytics_academy"
+            class="mx-1 social-container"
+            >
+            <img
+              :src="require('./assets/images/telegram.svg')"
+              class="social"
+              >
+          </b-link>
           <b-nav-item-dropdown
             :text="language_button_text"
             right
@@ -74,6 +120,7 @@
     </div>
     <div
       class="bg-dark py-3"
+      id="contacts"
       >
       <b-container>
         <b-row>
@@ -141,6 +188,14 @@
                 {{ privacy_policy_link_text }}
               </b-link>
             </div>
+            <div>
+              <b-link
+                href="/copyright.pdf"
+                class="text-light"
+                >
+                {{ copyright_link_text }}
+              </b-link>
+            </div>
           </b-col>
         </b-row>
       </b-container>
@@ -168,6 +223,12 @@ export default {
     login_link_text() {
       return this.language === 'ru' ? 'Войти' : 'Увійти';
     },
+    contacts_link_text() {
+      return this.language === 'ru' ? 'Контакты' : 'Контакти';
+    },
+    service_link_text() {
+      return this.language === 'ru' ? 'Наши услуги' : 'Наші послуги';
+    },
     language_button_text() {
       return this.language === 'ru' ? 'Язык' : 'Мова';
     },
@@ -176,6 +237,9 @@ export default {
     },
     privacy_policy_link_text() {
       return this.language === 'ru' ? 'Политика конфиденциальности' : 'Політика конфіденційності';
+    },
+    copyright_link_text() {
+      return this.language === 'ru' ? 'Авторское право' : 'Авторське право';
     },
   },
   methods: {
@@ -209,3 +273,14 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+.social {
+  height: 1.3em;
+}
+.social-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+</style>

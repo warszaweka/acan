@@ -23,7 +23,9 @@ def csrf(request):
 
 def media(request, relative_path):
     allowed = False
-    if Course.objects.filter(image=relative_path).exists():
+    if relative_path.startswith('article_images/'):
+        allowed = True
+    elif Course.objects.filter(image=relative_path).exists():
         allowed = True
     else:
         match = fullmatch(r'lesson_(\d*)_\d*\.ts', relative_path)
@@ -45,10 +47,9 @@ def media(request, relative_path):
 def payment(request):
     data = request.POST['data']
     if b64encode(
-            sha1(
-                f'{settings.LIQPAY_PRIVATE_KEY}{data}{settings.LIQPAY_PRIVATE_KEY}'
-                .encode('utf-8')).digest()).decode(
-                    'ascii') == request.POST['signature']:
+            sha1((f'{settings.LIQPAY_PRIVATE_KEY}{data}' +
+                  settings.LIQPAY_PRIVATE_KEY).encode('utf-8')).digest()
+    ).decode('ascii') == request.POST['signature']:
         clear_data = loads(b64decode(data).decode('utf-8'))
         if clear_data['status'] == 'success':
             order = Order.objects.get(pk=clear_data['order_id'])

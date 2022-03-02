@@ -5,6 +5,7 @@ from django.db.models import (CASCADE, PROTECT, BooleanField, CharField,
 
 
 class Course(Model):
+    order_int = PositiveSmallIntegerField()
     published = BooleanField(default=False)
     soon = BooleanField(default=False)
     title = CharField(max_length=128)
@@ -37,6 +38,7 @@ class Lesson(Model):
 
 
 class UserManager(BaseUserManager):
+
     def create_user(self, email, password, phone, first_name, last_name):
         user = self.model(email=self.normalize_email(email),
                           phone=phone,
@@ -82,3 +84,13 @@ class Order(Model):
 
     def __str__(self):
         return f'{self.user} @ {self.course}'
+
+
+class Article(Model):
+    order = PositiveSmallIntegerField()
+    title = CharField(max_length=128)
+    image = FileField(upload_to='article_images/')
+    text = TextField()
+
+    def __str__(self):
+        return self.title

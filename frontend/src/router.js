@@ -13,6 +13,7 @@ import SetMailingList from './components/SetMailingList.vue';
 import Payment from './components/Payment.vue';
 import PublicOffer from './components/PublicOffer.vue';
 import PrivacyPolicy from './components/PrivacyPolicy.vue';
+import Service from './components/Service.vue';
 
 Vue.use(VueRouter);
 
@@ -93,6 +94,11 @@ export default new VueRouter({
       path: '/privacy_policy',
       component: PrivacyPolicy,
       name: 'privacy_policy',
+    },
+    {
+      path: '/service',
+      component: Service,
+      name: 'service',
     },
   ],
   linkActiveClass: 'active',

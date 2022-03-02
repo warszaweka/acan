@@ -5,16 +5,17 @@ from django.contrib.auth.models import Group
 from django.core.files.storage import default_storage
 from django.forms import CharField, ModelForm, PasswordInput
 from modeltranslation.admin import TranslationAdmin
+from PIL import Image
 
-from .models import Course, Lesson, Order, User
+from .models import Article, Course, Lesson, Order, User
 
 
 @register(Course)
 class CourseAdmin(TranslationAdmin):
-    list_display = ('title', 'cost', 'published', 'soon')
+    list_display = ('order_int', 'title', 'cost', 'published', 'soon')
     list_filter = ('published', 'soon')
     search_fields = ('title', )
-    ordering = ('title', 'cost')
+    ordering = ('order_int', 'title', 'cost')
 
 
 @register(Lesson)
@@ -57,6 +58,7 @@ class UserCreationForm(ModelForm):
 
 
 class UserChangeForm(ModelForm):
+
     class Meta:
         model = User
         fields = ('mailing_list', 'is_staff')
@@ -89,3 +91,18 @@ class OrderAdmin(ModelAdmin):
     list_filter = ('payed', )
     search_fields = ('course', 'user')
     ordering = ('course', 'user')
+
+
+@register(Article)
+class ArticleAdmin(TranslationAdmin):
+    list_display = ('order', 'title')
+    search_fields = ('title', )
+    ordering = ('order', 'title')
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if 'image' in form.changed_data:
+            path = obj.image.path
+            with Image.open(path) as im:
+                width = im.size[0]
+                im.crop((0, 0, width, width * 0.3)).save(path)
