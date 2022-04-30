@@ -7,7 +7,7 @@ from smtplib import SMTPRecipientsRefused
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.core.mail import send_mail
-from django.db import DataError, IntegrityError
+from django.db import DataError, IntegrityError, transaction
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -16,9 +16,13 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.translation import activate, get_language
 from graphene import Boolean, Field, List, NonNull, ObjectType, String
 from graphene_django import DjangoObjectType
+from django_simple_coupons.validations import validate_coupon
+from django_simple_coupons.models import Coupon
 
 from .models import Article, Course, Lesson, Order, User, UserManager
 from .tokens import email_verify_token, password_reset_token
+
+TWOPLACES = Decimal(10) ** Decimal(-2)
 
 
 class CourseType(DjangoObjectType):
@@ -41,7 +45,7 @@ class CourseType(DjangoObjectType):
     def resolve_cost(parent, info):
         if parent.published:
             return parent.cost
-        return Decimal(0)
+        return Decimal(0).quantize(TWOPLACES)
 
     def resolve_lesson_set(parent, info):
         if parent.published:
@@ -108,7 +112,7 @@ class Query(ObjectType):
     language = String(required=True)
     articles = List(NonNull(ArticleType), required=True)
 
-    def resolve_courses(root, info):
+    def resolve_courses(root, info):  # type: ignore[misc]
         return Course.objects.order_by('order_int').filter(
             Q(published=True) | Q(soon=True)).all()
 
@@ -129,10 +133,10 @@ class Query(ObjectType):
         if user.is_authenticated:
             return user
 
-    def resolve_language(root, info):
+    def resolve_language(root, info):  # type: ignore[misc]
         return get_language()
 
-    def resolve_articles(root, info):
+    def resolve_articles(root, info):  # type: ignore[misc]
         return Article.objects.order_by('order').all()
 
 
@@ -140,10 +144,10 @@ class CreateOrderResult(ObjectType):
     data = String(required=True)
     signature = String(required=True)
 
-    def resolve_data(parent, info):
+    def resolve_data(parent, info):  # type: ignore[misc]
         return parent['data']
 
-    def resolve_signature(parent, info):
+    def resolve_signature(parent, info):  # type: ignore[misc]
         return parent['signature']
 
 
@@ -175,7 +179,11 @@ class Mutation(ObjectType):
                            uidb64=String(required=True),
                            token=String(required=True),
                            password=String(required=True))
-    create_order = Field(CreateOrderResult, id=String(required=True))
+    create_order = Field(
+        CreateOrderResult,
+        id=String(
+            required=True),
+        coupon=String())
     set_language = Field(Boolean,
                          required=True,
                          language=String(required=True))
@@ -195,7 +203,7 @@ class Mutation(ObjectType):
             return 'Invalid credentials'
         login(context, user)
 
-    def resolve_logout(root, info):
+    def resolve_logout(root, info):  # type: ignore[misc]
         logout(info.context)
         return True
 
@@ -226,10 +234,13 @@ class Mutation(ObjectType):
                     'Email verify',
                     render_to_string(
                         'acan/email_verify.html', {
+                            'first_name': user.first_name,
                             'url': settings.ACAN_EMAIL_VERIFY_URL,
                             'uidb64': urlsafe_base64_encode(
                                 force_bytes(user.pk)),
                             'token': email_verify_token.make_token(user),
+                            'login_url': settings.ACAN_LOGIN_URL,
+                            'courses_url': settings.ACAN_COURSES_URL,
                         }),
                     settings.ACAN_EMAIL_FROM,
                     [user.email],
@@ -274,6 +285,7 @@ class Mutation(ObjectType):
                 'Password reset',
                 render_to_string(
                     'acan/password_reset.html', {
+                        'first_name': user.first_name,
                         'url': settings.ACAN_PASSWORD_RESET_URL,
                         'uidb64': urlsafe_base64_encode(force_bytes(user.pk)),
                         'token': password_reset_token.make_token(user),
@@ -293,7 +305,7 @@ class Mutation(ObjectType):
             pass
         return True
 
-    def resolve_create_order(root, info, id):
+    def resolve_create_order(root, info, id, coupon=None):
         user = info.context.user
         if user.is_authenticated:
             try:
@@ -301,36 +313,72 @@ class Mutation(ObjectType):
             except Course.DoesNotExist:
                 pass
             else:
-                order = Order.objects.create(user_id=user.id, course_id=id)
-                data = b64encode(
-                    dumps({
-                        'version':
-                        '3',
-                        'public_key':
-                        settings.LIQPAY_PUBLIC_KEY,
-                        'action':
-                        'pay',
-                        'amount':
-                        str(course.cost),
-                        'currency':
-                        'UAH',
-                        'description':
-                        str(course.title),
-                        'order_id':
-                        str(order.id),
-                        'server_url':
-                        info.context.build_absolute_uri(
-                            reverse('acan:payment')),
-                    }).encode('utf-8')).decode('ascii')
-                return {
-                    'data':
-                    data,
-                    'signature':
-                    b64encode(
-                        sha1((f'{settings.LIQPAY_PRIVATE_KEY}{data}' +
-                              settings.LIQPAY_PRIVATE_KEY
-                              ).encode('utf-8')).digest()).decode('ascii'),
-                }
+                cost = course.cost
+                if coupon is not None:
+                    coupon_obj = None
+                    with transaction.atomic():
+                        try:
+                            coupon_obj = (Coupon
+                                          .objects
+                                          .select_for_update()
+                                          .get(code=coupon))
+                        except Coupon.DoesNotExist:
+                            pass
+                        else:
+                            if validate_coupon(
+                                    coupon_code=coupon, user=user)['valid']:
+                                coupon_obj.use_coupon(user=user)
+                            else:
+                                coupon_obj = None
+                    if coupon_obj is None:
+                        cost = None
+                    else:
+                        discount = coupon_obj.get_discount()
+                        discount_value = discount['value']
+                        if discount['is_percentage']:
+                            cost = (
+                                (
+                                    cost * (
+                                        Decimal(100).quantize(TWOPLACES) -
+                                        (Decimal(discount_value)
+                                         .quantize(TWOPLACES))
+                                    )
+                                ).quantize(TWOPLACES) / Decimal(100)
+                            ).quantize(TWOPLACES)
+                        else:
+                            cost = cost - \
+                                Decimal(discount_value).quantize(TWOPLACES)
+                if cost is not None:
+                    order = Order.objects.create(user_id=user.id, course_id=id)
+                    data = b64encode(
+                        dumps({
+                            'version':
+                            '3',
+                            'public_key':
+                            settings.LIQPAY_PUBLIC_KEY,
+                            'action':
+                            'pay',
+                            'amount':
+                            str(cost),
+                            'currency':
+                            'UAH',
+                            'description':
+                            str(course.title),
+                            'order_id':
+                            str(order.id),
+                            'server_url':
+                            info.context.build_absolute_uri(
+                                reverse('acan:payment')),
+                        }).encode('utf-8')).decode('ascii')
+                    return {
+                        'data':
+                        data,
+                        'signature':
+                        b64encode(
+                            sha1((f'{settings.LIQPAY_PRIVATE_KEY}{data}' +
+                                  settings.LIQPAY_PRIVATE_KEY
+                                  ).encode('utf-8')).digest()).decode('ascii'),
+                    }
 
     def resolve_set_language(root, info, language):
         if language in [

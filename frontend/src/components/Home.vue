@@ -388,6 +388,39 @@
         </b-col>
       </b-row>
     </b-container>
+    <b-container
+      class="py-5"
+      >
+      <b-row
+        align-h="center"
+        >
+        <b-col
+          cols="8"
+          >
+          <h5>
+            {{ zsu_text }}
+          </h5>
+        </b-col>
+        <b-col
+          cols="2"
+          >
+          <b-img
+            height="50"
+            :src="require('../assets/images/flag.png')"
+            >
+          </b-img>
+        </b-col>
+        <b-col
+          cols="1"
+          >
+          <b-img
+            height="50"
+            :src="require('../assets/images/emblem.png')"
+            >
+          </b-img>
+        </b-col>
+      </b-row>
+    </b-container>
   </div>
 </template>
 
@@ -624,6 +657,9 @@ export default {
           Вообще не важно -  вы только сделали первые шаги в Excel, или считаете себя уверенным пользователем – Вы найдете в рамках данного курса много нового и полезного. Нужно просто найти время и желание!
         `,
       ];
+    },
+    zsu_text() {
+      return this.language === 'ru' ? 'На период военного положение 50% средств вырученных с продажи курсов, будут перечисляться на нужды ЗСУ' : 'На период военного положение 50% средств вырученных с продажи курсов, будут перечисляться на нужды ЗСУ';
     },
   },
   apollo: {

@@ -30,25 +30,10 @@ export default {
   methods: {
     async purchase() {
       if (this.user) {
-        const { data: { createOrder: { data, signature } } } = await this.$apollo.mutate({
-          mutation: gql`
-            mutation ($id: String!) {
-              createOrder(id: $id) {
-                data
-                signature
-              }
-            }
-          `,
-          variables: {
-            id: this.course.id,
-          },
-        });
         this.$router.push({
-          name: 'payment',
+          name: 'coupon',
           params: {
             id: this.course.id,
-            data,
-            signature,
           },
         });
       } else {

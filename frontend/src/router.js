@@ -14,6 +14,7 @@ import Payment from './components/Payment.vue';
 import PublicOffer from './components/PublicOffer.vue';
 import PrivacyPolicy from './components/PrivacyPolicy.vue';
 import Service from './components/Service.vue';
+import Coupon from './components/Coupon.vue';
 
 Vue.use(VueRouter);
 
@@ -99,6 +100,11 @@ export default new VueRouter({
       path: '/service',
       component: Service,
       name: 'service',
+    },
+    {
+      path: '/coupon/:id',
+      component: Coupon,
+      name: 'coupon',
     },
   ],
   linkActiveClass: 'active',

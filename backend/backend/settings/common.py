@@ -15,6 +15,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'graphene_django',
     'corsheaders',
+    'django_simple_coupons',
 ]
 LANGUAGE_CODE = 'uk'
 LANGUAGES = [
@@ -54,3 +55,4 @@ GRAPHENE = {
     'SCHEMA': 'backend.schema.schema',
 }
 CORS_ALLOW_CREDENTIALS = True
+DSC_COUPON_CODE_LENGTH = 16
