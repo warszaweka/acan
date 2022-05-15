@@ -89,7 +89,7 @@ class Order(Model):
 class Article(Model):
     order = PositiveSmallIntegerField()
     title = CharField(max_length=128)
-    image = FileField(upload_to='article_images/')
+    image = FileField(null=True, blank=True, upload_to='article_images/')
     text = TextField()
 
     def __str__(self):
