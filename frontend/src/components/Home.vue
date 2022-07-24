@@ -23,6 +23,7 @@
     </div>
     <div>
       <b-carousel
+        v-if="articles.length !== 0"
         controls
         indicators
       >

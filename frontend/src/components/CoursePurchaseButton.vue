@@ -1,16 +1,34 @@
 <template>
   <span>
-    <b-button
+    <span
       v-if="course"
-      v-on:click.prevent="purchase"
       >
-      <span>
-        {{ course.cost }}
-      </span>
-      <span>
-        UAH
-      </span>
-    </b-button>
+      <b-button
+        v-on:click.prevent="purchase"
+        >
+        <span>
+          {{ course.cost }}
+        </span>
+        <span
+          v-if="course.previousCost"
+          id="previous-cost"
+          >{{ course.previousCost }}</span>
+        <span>
+          UAH
+        </span>
+        <b-badge
+          v-if="course.discountDeadline"
+          variant="light"
+          >
+          <span>
+            {{ till_text }}
+          </span>
+          <span>
+            {{ course.discountDeadline }}
+          </span>
+        </b-badge>
+      </b-button>
+    </span>
   </span>
 </template>
 
@@ -22,11 +40,17 @@ export default {
     return {
       course: null,
       user: null,
+      language: 'uk',
     };
   },
   props: [
     'id',
   ],
+  computed: {
+    till_text() {
+      return this.language === 'ru' ? 'До' : 'До';
+    },
+  },
   methods: {
     async purchase() {
       if (this.user) {
@@ -50,6 +74,8 @@ export default {
           course(id: $id) {
             id
             cost
+            previousCost
+            discountDeadline
           }
         }
       `,
@@ -66,6 +92,17 @@ export default {
         }
       }
     `,
+    language: gql`
+      query {
+        language
+      }
+    `,
   },
 };
 </script>
+
+<style lang="scss" scoped>
+#previous-cost {
+  text-decoration: line-through red;
+}
+</style>

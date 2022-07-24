@@ -14,7 +14,16 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.translation import activate, get_language
-from graphene import Boolean, Field, List, NonNull, ObjectType, String
+from graphene import (
+    Boolean,
+    Date,
+    Decimal as GrapheneDecimal,
+    Field,
+    List,
+    NonNull,
+    ObjectType,
+    String,
+)
 from graphene_django import DjangoObjectType
 from django_simple_coupons.validations import validate_coupon
 from django_simple_coupons.models import Coupon
@@ -30,27 +39,38 @@ class CourseType(DjangoObjectType):
     class Meta:
         model = Course
         fields = ('id', 'soon', 'title', 'image', 'short_description',
-                  'description', 'cost', 'lesson_set')
+                  'description', 'lesson_set')
 
     purchased = Boolean(required=True)
-
-    def resolve_purchased(parent, info):
-        return parent.purchased(info.context.user)
+    cost = NonNull(GrapheneDecimal)
+    previous_cost = GrapheneDecimal()
+    discount_deadline = Date()
 
     def resolve_description(parent, info):
         if parent.published:
             return parent.description
         return ""
 
-    def resolve_cost(parent, info):
-        if parent.published:
-            return parent.cost
-        return Decimal(0).quantize(TWOPLACES)
-
     def resolve_lesson_set(parent, info):
         if parent.published:
             return parent.lesson_set.order_by('order').all()
         return Lesson.objects.none()
+
+    def resolve_purchased(parent, info):
+        return parent.purchased(info.context.user)
+
+    def resolve_cost(parent, info):
+        if parent.published:
+            return parent.actual_cost()
+        return Decimal(0).quantize(TWOPLACES)
+
+    def resolve_previous_cost(parent, info):
+        if parent.published:
+            return parent.previous_cost()
+
+    def resolve_discount_deadline(parent, info):
+        if parent.published:
+            return parent.actual_discount_deadline()
 
 
 class LessonType(DjangoObjectType):
@@ -313,7 +333,7 @@ class Mutation(ObjectType):
             except Course.DoesNotExist:
                 pass
             else:
-                cost = course.cost
+                cost = course.actual_cost()
                 if coupon is not None:
                     coupon_obj = None
                     with transaction.atomic():

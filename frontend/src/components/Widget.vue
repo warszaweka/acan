@@ -69,7 +69,6 @@
             :key="lesson.id"
             :to="course.purchased ? { name: 'lesson', params: { id: lesson.id } } : null"
             :active="$route.name === 'lesson' && $data.lesson && $data.lesson.id === lesson.id"
-            @click="top"
             >
             <span
               class="font-weight-bold"
@@ -122,7 +121,6 @@
           <b-button
             v-if="lesson.previous"
             :to="{ name: 'lesson', params: { id: lesson.previous.id } }"
-            @click="top"
             class="mx-3"
             >
             {{ previous_button_text }}
@@ -130,7 +128,6 @@
           <b-button
             v-if="lesson.next"
             :to="{ name: 'lesson', params: { id: lesson.next.id } }"
-            @click="top"
             class="mx-3"
             >
             {{ next_button_text }}
@@ -179,14 +176,6 @@ export default {
     },
     next_button_text() {
       return this.language === 'ru' ? 'Следующий' : 'Наступний';
-    },
-  },
-  methods: {
-    top() {
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth',
-      });
     },
   },
   apollo: {

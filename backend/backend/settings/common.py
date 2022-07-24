@@ -46,7 +46,9 @@ TEMPLATES = [
         },
     },
 ]
+TIME_ZONE = 'Europe/Kiev'
 USE_I18N = True
+USE_TZ = True
 AUTH_USER_MODEL = 'acan.User'
 SESSION_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SECURE = True

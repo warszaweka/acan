@@ -1,7 +1,10 @@
+from django.utils.timezone import localdate
+
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.db.models import (CASCADE, PROTECT, BooleanField, CharField,
-                              DecimalField, EmailField, FileField, ForeignKey,
-                              Model, PositiveSmallIntegerField, TextField)
+                              DateField, DecimalField, EmailField, FileField,
+                              ForeignKey, Model, PositiveSmallIntegerField,
+                              TextField)
 
 
 class Course(Model):
@@ -13,6 +16,14 @@ class Course(Model):
     short_description = TextField()
     description = TextField()
     cost = DecimalField(max_digits=8, decimal_places=2)
+    discount = DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    discount_deadline = DateField(null=True, blank=True)
+    discount_active = BooleanField(default=False)
 
     def purchased(self, user):
         if user.is_authenticated and __class__.objects.filter(
@@ -20,6 +31,27 @@ class Course(Model):
                 order__payed=True).exists():
             return True
         return False
+
+    def actual_discount_active(self):
+        return (
+            self.discount is not None and
+            self.discount_deadline is not None and
+            localdate() < self.discount_deadline and
+            self.discount_active
+        )
+
+    def actual_cost(self):
+        if self.actual_discount_active():
+            return self.discount
+        return self.cost
+
+    def previous_cost(self):
+        if self.actual_discount_active():
+            return self.cost
+
+    def actual_discount_deadline(self):
+        if self.actual_discount_active():
+            return self.discount_deadline
 
     def __str__(self):
         return self.title

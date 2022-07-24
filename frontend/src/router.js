@@ -108,4 +108,18 @@ export default new VueRouter({
     },
   ],
   linkActiveClass: 'active',
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition;
+    }
+    const scroll = {
+      behavior: 'smooth',
+    };
+    if (to.hash) {
+      scroll.selector = to.hash;
+    } else {
+      scroll.y = 0;
+    }
+    return scroll;
+  },
 });

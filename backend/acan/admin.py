@@ -12,10 +12,19 @@ from .models import Article, Course, Lesson, Order, User
 
 @register(Course)
 class CourseAdmin(TranslationAdmin):
-    list_display = ('order_int', 'title', 'cost', 'published', 'soon')
-    list_filter = ('published', 'soon')
+    list_display = (
+        'order_int',
+        'title',
+        'cost',
+        'discount',
+        'discount_deadline',
+        'discount_active',
+        'published',
+        'soon',
+    )
+    list_filter = ('discount_active', 'published', 'soon')
     search_fields = ('title', )
-    ordering = ('order_int', 'title', 'cost')
+    ordering = ('order_int', 'title', 'cost', 'discount', 'discount_deadline')
 
 
 @register(Lesson)

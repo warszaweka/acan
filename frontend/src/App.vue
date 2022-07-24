@@ -43,7 +43,7 @@
             {{ login_link_text }}
           </b-nav-item>
           <b-nav-item
-            href="#contacts"
+            :to="{ hash: '#contacts' }"
             >
             {{ contacts_link_text }}
           </b-nav-item>
