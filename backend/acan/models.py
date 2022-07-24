@@ -36,7 +36,7 @@ class Course(Model):
         return (
             self.discount is not None and
             self.discount_deadline is not None and
-            localdate() < self.discount_deadline and
+            localdate() <= self.discount_deadline and
             self.discount_active
         )
 
