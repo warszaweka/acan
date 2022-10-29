@@ -119,10 +119,12 @@
       </router-view>
     </div>
     <div
-      class="bg-dark py-3"
+      class="bg-dark"
       id="contacts"
       >
-      <b-container>
+      <b-container
+        class="py-3"
+        >
         <b-row>
           <b-col
             md="6"

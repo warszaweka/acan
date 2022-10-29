@@ -80,7 +80,7 @@ export default {
       return this.language === 'ru' ? 'Войти' : 'Увійти';
     },
     email_label() {
-      return this.language === 'ru' ? 'Электро́нная по́чта' : 'Електронна пошта';
+      return this.language === 'ru' ? 'Электронная почта' : 'Електронна пошта';
     },
     password_label() {
       return this.language === 'ru' ? 'Пароль' : 'Пароль';

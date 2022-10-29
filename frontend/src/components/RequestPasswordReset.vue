@@ -54,7 +54,7 @@ export default {
       return this.language === 'ru' ? 'Сбросить пароль' : 'Скинути пароль';
     },
     email_label() {
-      return this.language === 'ru' ? 'Электро́нная по́чта' : 'Електронна пошта';
+      return this.language === 'ru' ? 'Электронная почта' : 'Електронна пошта';
     },
     error_text() {
       return this.language === 'ru' ? 'Неиспользуемая почта' : 'Невикористовуєма пошта';

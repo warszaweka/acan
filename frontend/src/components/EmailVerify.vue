@@ -7,6 +7,7 @@
         <div>
           <b-button
             v-on:click.prevent="emailVerify"
+            class="mx-3"
             >
             {{ email_verify_button_text }}
           </b-button>
