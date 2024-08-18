@@ -45,7 +45,7 @@ class LessonAdmin(TranslationAdmin):
                                                 start_number=0,
                                                 hls_time=10,
                                                 hls_list_size=0,
-                                                f='hls').run()
+                                                f='hls').run(cmd=['ffmpeg', '-fflags', '+genpts'])
             old_video.delete(save=False)
             obj.video = new_video
             obj.save()
