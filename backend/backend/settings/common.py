@@ -22,6 +22,19 @@ LANGUAGES = [
     ('uk', 'Ukrainian'),
     ('ru', 'Russian'),
 ]
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+    },
+}
 MEDIA_ROOT = BASE_DIR / 'media'
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
