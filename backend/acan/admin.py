@@ -41,7 +41,7 @@ class LessonAdmin(TranslationAdmin):
             new_video_path = default_storage.path(new_video)
             ffmpeg.input(old_video.path).output(new_video_path,
                                                 acodec='aac',
-                                                vcodec='copy',
+                                                vcodec='libx264',
                                                 start_number=0,
                                                 hls_time=10,
                                                 hls_list_size=0,
