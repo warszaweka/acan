@@ -12,7 +12,7 @@ class CourseTranslationOptions(TranslationOptions):
 @register(Lesson)
 class LessonTranslationOptions(TranslationOptions):
     fields = ('title', 'description')
-    required_languages = ('uk', 'ru')
+    required_languages = {'default': ('title',)}
 
 
 @register(Article)

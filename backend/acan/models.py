@@ -61,7 +61,7 @@ class Lesson(Model):
     course = ForeignKey(Course, on_delete=CASCADE)
     order = PositiveSmallIntegerField()
     title = CharField(max_length=128)
-    description = TextField(null=True, blank=True)
+    description = TextField(blank=True)
     video = FileField()
     addon = FileField(null=True, blank=True, upload_to='addons/')
 
